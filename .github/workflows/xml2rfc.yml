@@ -1,0 +1,35 @@
+name: render RFC output
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+
+      - name: cache xml2rfc cache
+        id: xml2rfc-cache
+        uses: actions/cache@v3
+        with:
+          key: xml2rfc-cache
+          path: .cache-xml2rfc
+
+      - name: create output dir
+        run: |
+          mkdir output
+
+      - name: build html and txt output
+        uses: addnab/docker-run-action@v3
+        with:
+          image: paulej/rfctools
+          options: -v ${{ github.workspace }}:/rfc -v ${{ github.workspace }}/.cache-xml2rfc:/var/cache/xml2rfc -w /rfc 
+          run: |
+            xml2rfc -p output --text --html draft-ietf-grow-nrtm-v4.xml
+      
+      - name: Archive output
+        uses: actions/upload-artifact@v3
+        with:
+          name: xml2rfc-output
+          path: output/
